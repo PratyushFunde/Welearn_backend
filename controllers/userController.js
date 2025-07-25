@@ -1,7 +1,9 @@
 const User = require('../models/user');
 const bcrypt = require("bcrypt");
 const sendEmail = require('../utils/sendEmail');
+const handleGeminiPdfUpload=require('../utils/modelApi');
 const jwt=require('jsonwebtoken');
+
 
 exports.test=(req,res)=>{
     res.json({msg:"User router working !"})
@@ -111,3 +113,16 @@ exports.loginUser=async(req,res)=>{
     }
 }
 
+exports.analyzeResume=async(req,res)=>{
+    try{
+        const filePath=req.file.path;
+        const result=await handleGeminiPdfUpload(filePath);
+        // console.log(result.candidates.content.parts[0]);
+        res.status(200).json(result);
+    }
+    catch(error)
+    {
+        const status = error.statusCode || 500;
+        res.status(status).json({ error: error.message });
+    }
+}
