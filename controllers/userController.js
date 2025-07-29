@@ -17,7 +17,7 @@ exports.createUser = async (req, res) => {
         const existingUser = await User.findOne({ email });
 
         if (existingUser) {
-            return res.ststus(400).json({ msg: "User already exists !" });
+            return res.status(409).json({ msg: "User already exists !" });
         }
 
         const salt = 10;
