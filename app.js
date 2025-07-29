@@ -24,8 +24,6 @@ app.use((req,res,next)=>{
 
 app.use('/api/user',jsonParser,userRouter);
 
-// const PORT=8000;
-
 const PORT=process.env.PORT;
 const MONGO_URI=process.env.MONGODB_URI;
 mongoose.connect(MONGO_URI).then(()=>{
