@@ -1,7 +1,7 @@
 const User = require('../models/user');
 const bcrypt = require("bcrypt");
 const sendEmail = require('../utils/sendEmail');
-const handleGeminiPdfUpload = require('../utils/modelApi');
+const handleOpenRouterPdfUpload = require('../utils/modelApi');
 const jwt = require('jsonwebtoken');
 const { createQuestion } = require('../utils/createQuestion');
 
@@ -17,7 +17,7 @@ exports.createUser = async (req, res) => {
         const existingUser = await User.findOne({ email });
 
         if (existingUser) {
-            return res.ststus(400).json({ msg: "User already exists !" });
+            return res.status(409).json({ msg: "User already exists !" });
         }
 
         const salt = 10;
@@ -115,7 +115,7 @@ exports.loginUser = async (req, res) => {
 exports.analyzeResume = async (req, res) => {
     try {
         const filePath = req.file.path;
-        const result = await handleGeminiPdfUpload(filePath);
+        const result = await handleOpenRouterPdfUpload(filePath);
         // console.log(result.candidates.content.parts[0]);
         res.status(200).json(result);
     }
