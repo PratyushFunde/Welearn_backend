@@ -126,8 +126,8 @@ exports.analyzeResume = async (req, res) => {
 }
 
 exports.createQuestion = async (req, res) => {
-    const { userAnswer } = req.body
-    const payload = `Create only one question based on this answer ${userAnswer} for interview and give it in json form create only one question called QUESTION ,it should be followup of the answer`
+    const { data } = req.body
+    const payload = `Create only one behavioural question based on the skills ${data.skills} and experience ${data.experience} for interview and give it in json form create only object question called question`
     try {
         const response = await createQuestion(payload);
         const question = response.choices[0].message.content;
