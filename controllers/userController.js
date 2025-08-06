@@ -1,9 +1,13 @@
 const User = require('../models/user');
 const bcrypt = require("bcrypt");
 const sendEmail = require('../utils/sendEmail');
-const handleOpenRouterPdfUpload = require('../utils/modelApi');
+const { handleOpenRouterPdfUpload, handleGroqPdfUpload } = require('../utils/modelApi');
 const jwt = require('jsonwebtoken');
-const { createQuestion } = require('../utils/createQuestion');
+const { createQuestion, createQuestionFromGroq } = require('../utils/createQuestion');
+const axios = require('axios');
+const fs = require('fs');
+const FormData = require('form-data');
+const Interview=require('../models/interview')
 
 
 exports.test = (req, res) => {
@@ -115,7 +119,8 @@ exports.loginUser = async (req, res) => {
 exports.analyzeResume = async (req, res) => {
     try {
         const filePath = req.file.path;
-        const result = await handleOpenRouterPdfUpload(filePath);
+        // const result = await handleOpenRouterPdfUpload(filePath);
+        const result = await handleGroqPdfUpload(filePath);
         // console.log(result.candidates.content.parts[0]);
         res.status(200).json(result);
     }
@@ -127,14 +132,44 @@ exports.analyzeResume = async (req, res) => {
 
 exports.createQuestion = async (req, res) => {
     const { data } = req.body
-    const payload = `Create only one behavioural question based on the skills ${data.skills} and experience ${data.experience} for interview and give it in json form create only object question called question`
+    const payload = `Create only one behavioural question based on the skills ${data.skills} and experience ${data.experience} include different skills and ask related to the previous question's answer ${data.answer} for interview and give it in json form create only object question called question only question nothing else just question in the json. Keep the question short max two lines.`
     try {
-        const response = await createQuestion(payload);
+        const response = await createQuestionFromGroq(payload);
         const question = response.choices[0].message.content;
-        res.status(200).json(question)
+        res.status(200).json(question);
     }
     catch (err) {
         res.status(500).json({ error: `Error in question creation +${err.message}` })
     }
 
+}
+
+exports.addInterview = async (req, res) => {
+    try {
+        const { userId, questions } = req.body;
+
+        // Basic validation
+        if (!userId || !Array.isArray(questions) || questions.length === 0) {
+            return res.status(400).json({ message: 'userId and questions are required.' });
+        }
+
+        // // Validate each question
+        // for (const q of questions) {
+        //     if (!q.question || !q.answer) {
+        //         return res.status(400).json({ message: 'Each question must have both question and answer.' });
+        //     }
+        // }
+
+        // Create and save the interview
+        const interview = new Interview({ userId, questions });
+        const savedInterview = await interview.save();
+
+        return res.status(201).json({
+            message: 'Interview added successfully.',
+            interview: savedInterview,
+        });
+    } catch (error) {
+        console.error('Error adding interview:', error);
+        return res.status(500).js
+    }
 }
