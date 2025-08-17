@@ -15,6 +15,8 @@ userRouter.post('/login', userController.loginUser);
 
 userRouter.post('/analyzeResume', authMiddleware, upload.single('file'), userController.analyzeResume);
 userRouter.post('/createQuestion',authMiddleware, userController.createQuestion);
-userRouter.post('/addInterview',userController.addInterview);
+userRouter.post('/addInterview',authMiddleware,userController.addInterview);
+
+
 
 module.exports = userRouter;

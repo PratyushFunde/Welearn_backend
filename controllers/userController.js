@@ -7,8 +7,9 @@ const { createQuestion, createQuestionFromGroq } = require('../utils/createQuest
 const axios = require('axios');
 const fs = require('fs');
 const FormData = require('form-data');
-const Interview=require('../models/interview')
-
+const Interview = require('../models/interview')
+const {generateReport}=require("../utils/generateReport");
+const { sendAssessmentMail } = require('../utils/sendReport');
 
 exports.test = (req, res) => {
     res.json({ msg: "User router working !" })
@@ -21,6 +22,7 @@ exports.createUser = async (req, res) => {
         const existingUser = await User.findOne({ email });
 
         if (existingUser) {
+            console.log(existingUser)
             return res.status(409).json({ msg: "User already exists !" });
         }
 
@@ -36,8 +38,18 @@ exports.createUser = async (req, res) => {
 
         await sendEmail(
             email,
-            "Verify Your Mil for WeLearn",
-            `Your OTP is ${otp}. It will expire in 10 minutes.`)
+            "Verify Your Mail for WeLearn",
+            `Your OTP is ${otp}. It will expire in 10 minutes.`,
+            `
+            <div style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2 style="color: #4CAF50;">Welcome to WeLearn!</h2>
+            <p>Hi <strong>${name}</strong>,</p>
+            <p>Thank you for signing up. Please use the following OTP to verify your email:</p>
+            <h1 style="color: #333;">${otp}</h1>
+            <p>This OTP is valid for <strong>10 minutes</strong>.</p>
+            <p style="margin-top: 30px;">Best regards,<br><strong>WeLearn Team</strong></p>
+  </div>
+  `)
 
         res.status(200).json({ "msg": "Create user called !", userId: newUser._id, email: newUser.email });
     } catch (error) {
@@ -144,25 +156,26 @@ exports.createQuestion = async (req, res) => {
 
 }
 
+
 exports.addInterview = async (req, res) => {
     try {
-        const { userId, questions } = req.body;
+        const { userId, userEmail, questions } = req.body;
 
         // Basic validation
         if (!userId || !Array.isArray(questions) || questions.length === 0) {
             return res.status(400).json({ message: 'userId and questions are required.' });
         }
 
-        // // Validate each question
-        // for (const q of questions) {
-        //     if (!q.question || !q.answer) {
-        //         return res.status(400).json({ message: 'Each question must have both question and answer.' });
-        //     }
-        // }
+       
 
         // Create and save the interview
         const interview = new Interview({ userId, questions });
         const savedInterview = await interview.save();
+
+        const response=await generateReport(questions);
+        const report=response.choices[0].message.content;
+        console.log(report)
+        sendAssessmentMail(userEmail,JSON.parse(report))
 
         return res.status(201).json({
             message: 'Interview added successfully.',
@@ -173,3 +186,4 @@ exports.addInterview = async (req, res) => {
         return res.status(500).js
     }
 }
+
